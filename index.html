@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+<body>
+<h1>Ordered Transitions Test</h1>
+<h2>Dataset 0</h2>
+<input type="text" id="numbers0" name="numbers0" required minlength="0" maxlength="65536" size="64"/>
+<h2>Dataset 1</h2>
+<input type="text" id="numbers1" name="numbers1" required minlength="0" maxlength="65536" size="64"/>
+<h2>Shared Ranks</h2>
+<canvas id="shr" width="512" height="16" style="border:1px solid grey"></canvas>
+<h2>Transition Count Distribution</h2>
+<canvas id="tcd" width="512" height="384" style="border:1px solid grey"></canvas>
+<h2>Final Verdict</h2>
+<output type="text" id="verdict" name="verdict" size="64"/>
+<canvas id="df1" width="512" height="384" style="border:1px solid grey"></canvas>
+<script>
+// math.combinations(n, k);
+const shr = document.getElementById("shr");
+const shr_ctx = edf.getContext("2d");
+const tcd = document.getElementById("tcd");
+const tcd_ctx = pd1.getContext("2d");
+document.getElementById("numbers0").addEventListener("input",update);
+document.getElementById("numbers1").addEventListener("input",update);
+function update(e) {
+  data0 = document.getElementById("numbers0").value.match(/\S+/g).map(x=>parseFloat(x)).sort((a,b)=>a-b);
+  data0 = document.getElementById("numbers1").value.match(/\S+/g).map(x=>parseFloat(x)).sort((a,b)=>a-b);
+}
+</script>
+</body>
+</html>
