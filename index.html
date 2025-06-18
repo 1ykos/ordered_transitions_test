@@ -2,6 +2,7 @@
 <html>
 <head>
 <script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
+<script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 </head>
 <body>
 <h1>Ordered Transitions Test</h1>
@@ -12,14 +13,12 @@
 <h2>Shared Ranks</h2>
 <canvas id="shr" width="512" height="16" style="border:1px solid grey"></canvas>
 <h2>Transition Count Distribution</h2>
-<canvas id="tcd" width="512" height="384" style="border:1px solid grey"></canvas>
+<div id="tcd" style="width:512px;height:384px;"></div>
 <h2>Final Verdict</h2>
 <output type="text" id="verdict" name="verdict" size="64"/>
 <script>
 const shr = document.getElementById("shr");
 const shr_ctx = shr.getContext("2d");
-const tcd = document.getElementById("tcd");
-const tcd_ctx = tcd.getContext("2d");
 function gauss_cdf(
   x,
   m,
@@ -117,7 +116,21 @@ function update(e) {
       t += p0*(1-p1)+(1-p0)*p1;
     }
     console.log("number of transitions = "+t.toString());
-    for (k=0;k<=n0+n1+1;++k); // TODO draw distribution
+    plot_data = [{
+      x: [...Array(n0+n1+1)].map((x,i)=>i),
+      y: [...Array(n0+n1+1)].map((x,i)=>(f(i,n0,n1)/math.combinations(n0+n1,n1))),
+      marker: {
+        color: [...Array(n0+n1+1)].map((x,i)=>(i<t?'rgba(255,0,0,1)':'rgba(0,0,255,1)'))
+      },
+      type: 'bar'
+    }];
+    layout = {
+      yaxis: {
+        // type: 'log',
+        autorange: true
+      }
+    };
+    Plotly.newPlot(document.getElementById('tcd'),plot_data,layout);
     p = rate_transitions(n0,n1,t);
     verdict = "p="+p.toString()+" ";
     if (p>15.0/16.0) verdict+= "(suspiciously even)"
