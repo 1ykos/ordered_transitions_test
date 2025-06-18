@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+<script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
 </head>
 <body>
 <h1>Ordered Transitions Test</h1>
@@ -15,18 +15,114 @@
 <canvas id="tcd" width="512" height="384" style="border:1px solid grey"></canvas>
 <h2>Final Verdict</h2>
 <output type="text" id="verdict" name="verdict" size="64"/>
-<canvas id="df1" width="512" height="384" style="border:1px solid grey"></canvas>
 <script>
-// math.combinations(n, k);
 const shr = document.getElementById("shr");
-const shr_ctx = edf.getContext("2d");
+const shr_ctx = shr.getContext("2d");
 const tcd = document.getElementById("tcd");
-const tcd_ctx = pd1.getContext("2d");
+const tcd_ctx = tcd.getContext("2d");
+function gauss_cdf(
+  x,
+  m,
+  s
+  )
+{
+  return (1+math.erf((x-m)/(s*Math.sqrt(2))))/2;
+}
+function transitions_mean_variance(
+  n0,
+  n1
+)
+{
+  return [
+    2*n0*n1/(n0+n1),
+    2*n0*n1*(2*n0*n1-n0-n1)/((n0+n1)**2*(n0+n1+1))
+  ];
+}
+function f(
+  k,
+  n0,
+  n1
+  )
+{
+  const p = (m,j) =>
+  {
+    if (j>m) return 0;
+    if ((m<1)||(j<1)) return 0;
+    return math.combinations(m-1,j-1);
+  };
+  k1 = (k+2)/2 |0;
+  k0 = k+1-k1;
+  return p(n0,k0)*p(n1,k1)+p(n0,k1)*p(n1,k0);
+}
+function rate_transitions(
+  n0,
+  n1,
+  t // number of transitions
+)
+{
+  if (n0*n1<1) return 1;
+  [mean,variance] = transitions_mean_variance(n0,n1);
+  sigma = math.sqrt(variance);
+  if (n0*n1<1024) {
+    sum_t = 0;
+    sum_e = 0;
+    k = 0;
+    for (k;k<t     ;++k) {
+      sum_t+=f(k,n0,n1);
+    }
+    for (k;k!=n0+n1;++k) {
+      sum_e+=f(k,n0,n1);
+    }
+    console.log("sum_t="+sum_t.toString()+"  sum_e="+sum_e.toString());
+    return sum_t/(sum_t+sum_e);
+  } else {
+    return gauss_cdf(t,mean,sigma);
+  }
+}
 document.getElementById("numbers0").addEventListener("input",update);
 document.getElementById("numbers1").addEventListener("input",update);
 function update(e) {
-  data0 = document.getElementById("numbers0").value.match(/\S+/g).map(x=>parseFloat(x)).sort((a,b)=>a-b);
-  data0 = document.getElementById("numbers1").value.match(/\S+/g).map(x=>parseFloat(x)).sort((a,b)=>a-b);
+  data0 = [];
+  data1 = [];
+  if (document.getElementById("numbers0").value) {
+    data0 = document.getElementById("numbers0").value.match(/\S+/g).map(x=>parseFloat(x));
+  }
+  if (document.getElementById("numbers1").value) {
+    data1 = document.getElementById("numbers1").value.match(/\S+/g).map(x=>parseFloat(x));
+  }
+  merge = [
+  ...data0.map(x => [x, [1,0]]),
+  ...data1.map(x => [x, [0,1]])
+  ].sort((a, b) => a[0] - b[0]);
+  n0 = data0.length;
+  n1 = data1.length;
+  verdict = "";
+  if ((n0==0)|(n1==0)) {
+    verdict="p=1 and impossible to tell";
+  } else {
+    uniq = [merge[0]];
+    for (i=1;i!=merge.length;++i) {
+      if (uniq[uniq.length-1][0]==merge[i][0]) {
+        uniq[uniq.length-1][1][0]+=merge[i][1][0];
+        uniq[uniq.length-1][1][1]+=merge[i][1][1];
+      } else {
+        uniq.push(merge[i]);
+      }
+    }
+    t = 0;
+    for (i=0;i!=uniq.length-1;++i) {
+      t += transitions_mean_variance(uniq[i][1][0],uniq[i][1][1])[0];
+      p0 = (1.0*uniq[i+0][1][0])/(uniq[i+0][1][0]+uniq[i+0][1][1]);
+      p1 = (1.0*uniq[i+1][1][0])/(uniq[i+1][1][0]+uniq[i+1][1][1]);
+      t += p0*(1-p1)+(1-p0)*p1;
+    }
+    console.log("number of transitions = "+t.toString());
+    for (k=0;k<=n0+n1+1;++k); // TODO draw distribution
+    p = rate_transitions(n0,n1,t);
+    verdict = "p="+p.toString()+" ";
+    if (p>15.0/16.0) verdict+= "(suspiciously even)"
+  }
+  document.getElementById("verdict").value = verdict;
 }
 </script>
 </body>
